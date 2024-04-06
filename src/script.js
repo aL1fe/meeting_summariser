@@ -1,5 +1,5 @@
 window.addEventListener("DOMContentLoaded", () => {
-    const upload = new UploadModal("#upload");
+    const upload = new UploadModal("#upload", "#loader");
 });
 
 class UploadModal {
@@ -11,13 +11,11 @@ class UploadModal {
     state = 0;
     analFile;
 
-    constructor(el) {
+    constructor(el, loader) {
         this.el = document.querySelector(el);
+        this.loader = document.querySelector(loader);
         this.el?.addEventListener("click", this.action.bind(this));
         this.el?.querySelector("#file")?.addEventListener("change", this.fileHandle.bind(this));
-
-        console.log(this.el?.querySelector("#drop"))
-
         const dropzoneOne = this.el?.querySelector("#drop")
         dropzoneOne.addEventListener('dragover', this.dropHandler.bind(this));
 
@@ -59,6 +57,7 @@ class UploadModal {
                 let reader = new FileReader();
                 reader.onload = e2 => {
                     this.fileDisplay(target.files[0].name);
+                    this.analFile = target.files[0];
                 };
                 reader.readAsDataURL(target.files[0]);
             }
@@ -148,11 +147,94 @@ class UploadModal {
         const formData = new FormData();
         formData.append('file', file);
 
+       this.el.style.display = 'none';
+       this.loader.style.display = 'block';
+
         fetch('/upload', {
             method: 'POST',
             body: formData,
-        })
-            .then(response => response.text())
-            .then(data => console.log(data));
+        }).then((response) => {
+            var reader = response.body.getReader();
+            var bytesReceived = 0;
+            return reader.read().then(function processResult(result) {
+                if (result.done) {
+                    console.log('Fetch complete');
+                    return;
+                }
+                bytesReceived += result.value.length;
+                console.log('Received', bytesReceived, 'bytes of data so far');
+                return reader.read().then(processResult);
+            });
+        });
     };
 }
+
+gsap.config({trialWarn: false});
+let select = s => document.querySelector(s),
+    toArray = s => gsap.utils.toArray(s),
+    loaderSVG = select('#loaderSVG'),
+    allEll = toArray('.ell'),
+    colorArr = ['#359EEE', '#FFC43D', '#EF476F', '#03CEA4'];
+
+let colorInterp = gsap.utils.interpolate(colorArr);
+
+gsap.set(loaderSVG, {
+    visibility: 'visible'
+});
+
+function animate(el, count) {
+    let tl = gsap.timeline({
+        defaults: {
+            ease: 'sine.inOut'
+        },
+        repeat: -1
+    });
+    gsap.set(el, {
+        opacity: 1 - count / (allEll.length),
+        stroke: colorInterp(count / (allEll.length))
+    })
+
+    tl.to(el, {
+        attr: {
+            ry: `-=${count * 2.3}`,
+            rx: `+=${count * 1.4}`
+        },
+        ease: 'sine.in'
+    })
+        .to(el, {
+            attr: {
+                ry: `+=${count * 2.3}`,
+                rx: `-=${count * 1.4}`
+            },
+            ease: 'sine'
+        })
+        .to(el, {
+            duration: 1,
+            rotation: -180,
+            transformOrigin: '50% 50%'
+        }, 0).timeScale(0.5)
+}
+
+allEll.forEach((c, i) => {
+    gsap.delayedCall(i / (allEll.length - 1), animate, [c, i + 1])
+});
+gsap.to('#aiGrad', {
+    duration: 4,
+    delay: 0.75,
+    attr: {
+        x1: '-=300',
+        x2: '-=300'
+    },
+    scale: 1.2,
+    transformOrigin: '50% 50%',
+    repeat: -1,
+    ease: 'none'
+});
+gsap.to('#ai', {
+    duration: 1,
+    scale: 1.1,
+    transformOrigin: '50% 50%',
+    repeat: -1,
+    yoyo: true,
+    ease: 'sine.inOut'
+});
