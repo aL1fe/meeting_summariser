@@ -155,7 +155,7 @@ class UploadModal {
             method: 'POST',
             body: formData,
         })
-            .then(response => response.text())
+            .then(response => response.json())
             .then((data) => {
                 this.loader.style.display = 'none';
                 this.resultBlock.style.display = 'block';

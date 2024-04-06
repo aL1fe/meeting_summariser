@@ -16,6 +16,10 @@
 .resultBlock {
     padding: 20px;
     scrollbar-width: thin;
+    margin-right: 20px;
+    height: 200px;
+    overflow-y: scroll;
+
     /*scrollbar-width: none;*/
 }
 
