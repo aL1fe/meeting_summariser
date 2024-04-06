@@ -1,5 +1,5 @@
 window.addEventListener("DOMContentLoaded", () => {
-    const upload = new UploadModal("#upload", "#loader");
+    const upload = new UploadModal("#upload", "#loader", "#result");
 });
 
 class UploadModal {
@@ -11,9 +11,10 @@ class UploadModal {
     state = 0;
     analFile;
 
-    constructor(el, loader) {
+    constructor(el, loader, resultBlock) {
         this.el = document.querySelector(el);
         this.loader = document.querySelector(loader);
+        this.resultBlock = document.querySelector(resultBlock);
         this.el?.addEventListener("click", this.action.bind(this));
         this.el?.querySelector("#file")?.addEventListener("change", this.fileHandle.bind(this));
         const dropzoneOne = this.el?.querySelector("#drop")
@@ -147,25 +148,37 @@ class UploadModal {
         const formData = new FormData();
         formData.append('file', file);
 
-       this.el.style.display = 'none';
-       this.loader.style.display = 'block';
+        this.el.style.display = 'none';
+        this.loader.style.display = 'block';
 
         fetch('/upload', {
             method: 'POST',
             body: formData,
-        }).then((response) => {
-            var reader = response.body.getReader();
-            var bytesReceived = 0;
-            return reader.read().then(function processResult(result) {
-                if (result.done) {
-                    console.log('Fetch complete');
-                    return;
-                }
-                bytesReceived += result.value.length;
-                console.log('Received', bytesReceived, 'bytes of data so far');
-                return reader.read().then(processResult);
+        })
+            .then(response => response.text())
+            .then((data) => {
+                this.loader.style.display = 'none';
+                this.resultBlock.style.display = 'block';
+                console.log(this.resultBlock.querySelector("#textResult"));
+                this.resultBlock.style.display = 'block';
+                this.resultBlock.querySelector("#textResult").textContent = data;
+                console.log(data)
             });
-        });
+
+        //     .then((response) => {
+        //     var reader = response.body.getReader();
+        //     var bytesReceived = 0;
+        //     return reader.read().then(function processResult(result) {
+        //         if (result.done) {
+        //             console.log('Fetch complete');
+        //             return;
+        //         }
+        //         bytesReceived += result.value.length;
+        //         console.log('Received', bytesReceived, 'bytes of data so far');
+        //         return reader.read().then(processResult);
+        //     });
+        // })
+        //     .then(data => console.log(data));
     };
 }
 
