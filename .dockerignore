@@ -5,3 +5,4 @@ req.py
 readme.txt
 docker-compose.yml
 ffmpeg.exe
+.env
