@@ -1,0 +1,1 @@
+docker build -t al1fe/meeting_summariser:v01.01 -f Dockerfile .

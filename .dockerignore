@@ -1,0 +1,7 @@
+whisper-large-v3/
+__pycache__/
+BuildImage.bat
+req.py
+readme.txt
+docker-compose.yml
+ffmpeg.exe
