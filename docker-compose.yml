@@ -3,9 +3,8 @@ name: hakhaton
 services:
   summariser:
     container_name: meeting
-    image: al1fe/meeting_summariser
-    restart: unless-stopped
+    image: al1fe/meeting_summariser:v01.01
     ports:
-      - 8066:8000
+      - 80:8000
     environment:
       - OPENAI_API_KEY=$OPENAI_API_KEY
