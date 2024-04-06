@@ -3,7 +3,7 @@ name: hakhaton
 services:
   summariser:
     container_name: meeting
-    image: al1fe/meeting_summariser:v01.01
+    image: al1fe/meeting_summariser:v01.05
     ports:
       - 80:8000
     environment:
