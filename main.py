@@ -6,6 +6,8 @@ from typing import List
 import os
 from openai import OpenAI
 import configparser
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -35,10 +37,20 @@ pipe = pipeline(
 
 app = FastAPI()
 
-#Test greeting   
+app.mount('/src', StaticFiles(directory='src', html=True), name='src')
+
 @app.get("/")
 def read_root():
-    return {"AI Odyssey"}
+    return FileResponse('src/index.html')
+
+# #Test greeting   
+# @app.get("/")
+# def read_root():
+    # return {"AI Odyssey"}
+    
+@app.post("/testData")
+def testData():
+    return {"message": "Test Message", "message2": "Test Message2"}
     
 
 @app.post("/upload/")
@@ -63,6 +75,29 @@ async def upload_file(file: UploadFile):
     )
 
     return response_openai.choices[0].message.content.strip()
+
+@app.post("/upload-full/")
+async def upload_file_full(file: UploadFile):
+    with open(file.filename, "wb") as f:
+        f.write(await file.read())
+    result = pipe(file.filename)
+    os.remove(file.filename)
+    
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    
+    config = configparser.ConfigParser()
+    config.read('config.ini') 
+    
+    prompt = config['OpenAI']['OpenAIPrompt'] + " The text of the meeting: " + result["text"]
+     
+    response_openai = client.chat.completions.create(
+        model="gpt-3.5-turbo",  
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    return {"TranscribedRecord": result["text"], "SummaryOfMeeting": response_openai.choices[0].message.content.strip()}
     
 if __name__ == "__main__":
     import uvicorn
