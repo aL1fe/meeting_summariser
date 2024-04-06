@@ -8,6 +8,7 @@ from openai import OpenAI
 import configparser
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
+import ffmpeg
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -39,15 +40,18 @@ app = FastAPI()
 
 app.mount('/src', StaticFiles(directory='src', html=True), name='src')
 
+def convert_to_mp3(input_file, output_file):
+    (
+        ffmpeg
+        .input(input_file)
+        .output(output_file, format='mp3')
+        .run()
+    )
+
 @app.get("/")
 def read_root():
     return FileResponse('src/index.html')
-
-# #Test greeting   
-# @app.get("/")
-# def read_root():
-    # return {"AI Odyssey"}
-    
+   
 @app.post("/testData")
 def testData():
     return {"message": "Test Message", "message2": "Test Message2"}
@@ -55,11 +59,22 @@ def testData():
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile):
+
     with open(file.filename, "wb") as f:
         f.write(await file.read())
-    result = pipe(file.filename)
-    os.remove(file.filename)
     
+    if file.filename.endswith(".mp3"):
+        mp3_filename = file.filename
+        result = pipe(mp3_filename)
+        os.remove(mp3_filename)
+    else:
+        mp4_filename = file.filename
+        mp3_filename = file.filename.replace(".mp4", ".mp3")
+        convert_to_mp3(mp4_filename, mp3_filename)      
+        result = pipe(mp3_filename)    
+        os.remove(mp3_filename)
+        os.remove(mp4_filename)
+      
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     
     config = configparser.ConfigParser()
