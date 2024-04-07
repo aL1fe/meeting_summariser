@@ -4,4 +4,6 @@ WORKDIR /app
 
 COPY . .
 
+RUN pip install ffmpeg-python
+
 CMD [ "python", "main.py" ]
