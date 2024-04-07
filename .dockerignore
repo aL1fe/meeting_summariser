@@ -1,5 +1,6 @@
 whisper-large-v3/
 __pycache__/
+MainDockerImage/
 BuildImage.bat
 req.py
 readme.txt
